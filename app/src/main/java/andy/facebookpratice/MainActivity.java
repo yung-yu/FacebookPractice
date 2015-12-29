@@ -7,40 +7,22 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.facebook.AccessToken;
-import com.facebook.AccessTokenTracker;
-import com.facebook.CallbackManager;
-import com.facebook.FacebookCallback;
-import com.facebook.FacebookException;
-import com.facebook.FacebookSdk;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
-import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
-import com.facebook.login.LoginManager;
-import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Arrays;
+import andy.spiderlibrary.utils.Log;
 
 public class MainActivity extends AppCompatActivity {
     Button loginButton;
-    CallbackManager callbackManager;
-    AccessTokenTracker accessTokenTracker;
-    AccessToken accessToken;
+
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -50,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext());
+         FacebookManager.getInstance().init(getApplicationContext());
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -66,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         loginButton = (Button) findViewById(R.id.login_button);
 
 
-        callbackManager = CallbackManager.Factory.create();
+
 
 
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -74,71 +56,18 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // Callback registration
                 // If the access token is available already assign it.
-                accessToken = AccessToken.getCurrentAccessToken();
-                if (accessToken == null || accessToken.isExpired()) {
+               FacebookManager.getInstance().login(MainActivity.this , new FacebookManager.LoginCallBack(){
 
-                    LoginManager.getInstance().logInWithReadPermissions(MainActivity.this, Arrays.asList(("public_profile, email, user_birthday, user_friends")));
-                    LoginManager.getInstance().logOut();
-                    LoginManager.getInstance().registerCallback(callbackManager,
-                            new FacebookCallback<LoginResult>() {
-                                @Override
-                                public void onSuccess(LoginResult loginResult) {
-                                    // App code
-                                    AccessToken.setCurrentAccessToken(loginResult.getAccessToken());
-                                    Toast.makeText(MainActivity.this, loginResult.getAccessToken().toString(), Toast.LENGTH_SHORT).show();
-                                    GraphRequest request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                   @Override
+                   public void onSucess() {
+                       Toast.makeText(MainActivity.this, "登入成功", Toast.LENGTH_SHORT).show();
+                   }
 
-                                        @Override
-                                        public void onCompleted(JSONObject json, GraphResponse response) {
-                                            if (response.getError() != null) {
-
-                                            } else {
-
-                                                String jsonresult = String.valueOf(json);
-
-                                                Log.d("requestReuslt", jsonresult);
-                                            }
-                                        }
-                                    });
-                                    Bundle parameters = new Bundle();
-                                    parameters.putString("fields", "id,name,email,gender, birthday");
-                                    request.setParameters(parameters);
-                                    request.executeAsync();
-                                }
-
-                                @Override
-                                public void onCancel() {
-                                    // App code
-                                    Toast.makeText(MainActivity.this, "onCancel", Toast.LENGTH_SHORT).show();
-                                }
-
-                                @Override
-                                public void onError(FacebookException exception) {
-                                    // App code
-                                    Toast.makeText(MainActivity.this, exception.toString(), Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                } else {
-                    Toast.makeText(MainActivity.this, accessToken.toString(), Toast.LENGTH_SHORT).show();
-                    GraphRequest request = GraphRequest.newMeRequest(accessToken, new GraphRequest.GraphJSONObjectCallback() {
-
-                        @Override
-                        public void onCompleted(JSONObject json, GraphResponse response) {
-                            if (response.getError() != null) {
-
-                            } else {
-
-                                String jsonresult = String.valueOf(json);
-
-                                Log.d("requestReuslt", jsonresult);
-                            }
-                        }
-                    });
-                    Bundle parameters = new Bundle();
-                    parameters.putString("fields", "id,name,email,gender, birthday");
-                    request.setParameters(parameters);
-                    request.executeAsync();
-                }
+                   @Override
+                   public void onFail(String err) {
+                       Toast.makeText(MainActivity.this,err, Toast.LENGTH_SHORT).show();
+                   }
+               });
             }
         });
 
@@ -166,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        callbackManager.onActivityResult(requestCode, resultCode, data);
+        FacebookManager.getInstance().getCallbackManager().onActivityResult(requestCode, resultCode, data);
 
     }
 
